@@ -1,0 +1,13 @@
+{
+    "license": "Artistic-2.0",
+    "source-url": "",
+    "depends": ["ASN::Grammar"],
+    "provides": {"ASN::META": "lib/ASN/META.pm6"},
+    "name": "ASN::META",
+    "description": "A MOP-based compile-time ASN.1 spec evaluator",
+    "resources": [],
+    "perl": "6.c",
+    "version": "0.1",
+    "authors": [],
+    "auth": "github:Altai-man"
+}
