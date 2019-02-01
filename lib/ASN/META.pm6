@@ -22,6 +22,7 @@ my $builtin-types = set
 my $complex-types = set 'ENUMERATED', 'SEQUENCE', 'SEQUENCE OF', 'SET', 'CHOICE';
 
 my %simple-builtin-types = 'OCTET STRING' => Str,
+        UTF8String => Str,
         BOOLEAN => Bool,
         INTEGER => Int,
         NULL => ASN-Null;
@@ -91,6 +92,9 @@ multi sub compile-complex-builtin('SEQUENCE', $type, %POOL, $symbol-name) {
                 when 'OCTET STRING' {
                     $attr does ASN::Types::OctetString;
                 }
+                when 'UTF8String' {
+                    $attr does ASN::Types::UTF8String;
+                }
                 default {
                     die "Other type of String is encountered: $_";
                 }
@@ -127,9 +131,9 @@ multi sub compile-complex-builtin('SEQUENCE OF', $type, %POOL, $symbol-name) {
             my $tag-value = .value;
             $new-type.^add_method('ASN-tag-value', method { $tag-value });
             if $of-type.type (elem) $builtin-types {
-                $new-type.^add_role(Positional[$of-type.type]);
+                $new-type.^add_role(Positional[%simple-builtin-types{$of-type.type}]);
             } else {
-                $new-type.^add_role(Positional[compile-type($of-type, %POOL, $of-type.type)]);
+                $new-type.^add_role(Positional[compile-type($of-type, %POOL, $of-type.type)[1]]);
             }
             $new-type.^compose;
             return %POOL{$symbol-name} = ('SEQUENCE OF', $new-type);
@@ -138,9 +142,10 @@ multi sub compile-complex-builtin('SEQUENCE OF', $type, %POOL, $symbol-name) {
 
     if $of-type.type (elem) $builtin-types {
         if $of-type.type (elem) $complex-types {
-            compile-type($of-type, %POOL, $symbol-name ~ 'Bottom');
+            my $bottom-type = compile-type($of-type, %POOL, $symbol-name ~ 'Bottom');
+            return %POOL{$symbol-name} = ('SEQUENCE OF', Positional[$bottom-type[1]]);
         }
-        return %POOL{$symbol-name} = ('SEQUENCE OF', Positional[$of-type.type]);
+        return %POOL{$symbol-name} = ('SEQUENCE OF', Positional[%simple-builtin-types{$of-type.type}]);
     } else {
         return %POOL{$symbol-name} = ('SEQUENCE OF', Positional[compile-type($of-type, %POOL, $of-type.type)[1]]);
     }
