@@ -1,4 +1,3 @@
-no precompilation;
 use nqp;
 use ASN::Types;
 use ASN::Grammar;
@@ -22,7 +21,6 @@ my $builtin-types = set
 
 my $complex-types = set 'ENUMERATED', 'SEQUENCE', 'SEQUENCE OF', 'SET', 'CHOICE';
 
-# FIXME Not all types are present
 my %simple-builtin-types = 'OCTET STRING' => Str,
         BOOLEAN => Bool,
         INTEGER => Int,
