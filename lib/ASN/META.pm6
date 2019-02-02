@@ -76,7 +76,10 @@ multi sub compile-complex-builtin('SEQUENCE', $type, %POOL, $symbol-name) {
         # A type that will be assigned to field
         my $field-name = $field.name;
         my $field-type-name = $field.type;
-        my $attribute-type = compile-type($field, %POOL, $field-name);
+        my $attribute-type = compile-type($field, %POOL,
+                $field-type-name (elem) $builtin-types ??
+                        $field-name !!
+                $field-type-name);
 
         # Create attribute's name and use it with type to create the attribute itself
         my $name = '$!' ~ S:g/(<[a..z]>)(<[A..Z]>)/$0-$1/.lc with $field-name;
