@@ -1,3 +1,4 @@
+use MONKEY-SEE-NO-EVAL;
 use nqp;
 use ASN::Types;
 use ASN::Grammar;
@@ -19,7 +20,7 @@ my $builtin-types = set
         'UniversalString', 'CHARATER STRING',
         'BMPString', 'CHOICE';
 
-my $complex-types = set 'ENUMERATED', 'SEQUENCE', 'SEQUENCE OF', 'SET', 'CHOICE';
+my $complex-types = set 'ENUMERATED', 'SEQUENCE', 'SEQUENCE OF', 'SET', 'CHOICE', 'SET OF';
 
 my %simple-builtin-types = 'OCTET STRING' => Str,
         UTF8String => Str,
@@ -154,6 +155,17 @@ multi sub compile-complex-builtin('SEQUENCE OF', $type, %POOL, $symbol-name) {
     }
 }
 
+multi sub compile-complex-builtin('SET OF', $type, %POOL, $symbol-name) {
+    my $of-type = $type.params<of>;
+    my $compile-type = compile-type($of-type, %POOL, $of-type.type);
+    if ($compile-type[1] === Str) {
+        if $compile-type[0] eq 'OCTET STRING' {
+            $compile-type = ($compile-type[0], ASN::Types::OctetString);
+        }
+    }
+    return %POOL{$symbol-name} = ('SET OF', ASNSetOf[$compile-type[1]]);
+}
+
 multi sub compile-complex-builtin('CHOICE', $type, %POOL, $symbol-name) {
     my $new-type := Metamodel::ClassHOW.new_type(name => $symbol-name);
     my %choices;
@@ -229,15 +241,24 @@ sub compile-builtin-type($type, %POOL, $symbol-name) {
 sub compile-type($type, %POOL, $asn-name) {
     #| Number of cases is possible here
     #| * Type is already compiled
+    #| * Type must be handled using a plugin
     #| * Type has to be created and added to cache
 
     #| We always title-case names:
     #| * Top-level names are being left as they are to be suitable for Perl 6 type
     #| * Inner-declared names are based on a field name, so have to be title-case to match the style
-    my $tc-name = $asn-name.tc;
+    my $symbol-name = $asn-name.tc;
 
     # Return if cached
-    return $_ with %POOL{$tc-name};
+    return $_ with %POOL{$symbol-name};
+
+    #| Try it we have a custom type implementation
+    with $*PLUGIN -> $plugin-code {
+        my $custom-type = EVAL $plugin-code;
+        if $custom-type.defined {
+            return %POOL{$symbol-name} = $custom-type;
+        }
+    }
 
     #| If it is not compiled, we have
     #| * Type = Custom | Native
@@ -248,7 +269,7 @@ sub compile-type($type, %POOL, $asn-name) {
     #| 2 and 3 demand us to either compile or get a type from cache and create type chain links
 
     if $type.type (elem) $builtin-types {
-        return compile-builtin-type($type, %POOL, $tc-name);
+        return compile-builtin-type($type, %POOL, $symbol-name);
     } else {
         # Check if custom is among types and reduce a link
         with $*TYPES.grep($type.type eq *.name).first {
@@ -273,6 +294,7 @@ sub EXPORT(*@params) {
     my %POOL;
     my $keys = @params.Map;
     my $ASN = parse-ASN slurp $keys<file>;
+    my $*PLUGIN = slurp($_) with $keys<plugin>;
     compile-types($_, %POOL) with $ASN;
     %POOL.map({.key => .value[1]}).Map;
 }
