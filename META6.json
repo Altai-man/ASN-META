@@ -6,7 +6,10 @@
     "depends": ["ASN::Grammar", "ASN::BER"],
     "license": "Artistic-2.0",
     "source-url": "https://github.com/Altai-man/ASN-META.git",
-    "provides": {"ASN::META": "lib/ASN/META.pm6"},
+    "provides": {
+        "ASN::META": "lib/ASN/META.pm6",
+        "ASN::META::Types": "lib/ASN/META/Types.pm6"
+    },
     "resources": [],
     "authors": [ "Alexander Kiryuhin <alexander.kiryuhin@gmail.com>" ],
     "auth": "github:Altai-man"
