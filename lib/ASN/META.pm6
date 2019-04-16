@@ -64,7 +64,6 @@ my sub resolve-recursion(ASNType $type, Str $name) {
         my $def = $*TYPES.grep(*.name eq $name).first;
         compile-complex-builtin('CHOICE', $def.type, $name).type.ASN-choice;
         for @($type.parent-list.reverse) -> $parent {
-            note $parent;
             with $*POOL.has($parent.key) {
                 compile-complex-builtin(.base-type, $parent.value, $parent.key);
             }
