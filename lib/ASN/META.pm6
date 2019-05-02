@@ -318,10 +318,8 @@ sub compile-type($type, $asn-name) {
     }
 
     #| Try if we have a custom type implementation
-    with $*PLUGIN {
-        with EVAL $_ {
-            return $*POOL.add($_);
-        }
+    for @*PLUGINS -> $PLUGIN {
+        return $*POOL.add(ASNType.new(name => $symbol-name, base-type => .key, type => .value)) with $PLUGIN.check($symbol-name);
     }
 
     #| If it is not compiled, we have
@@ -363,7 +361,12 @@ sub compile-types(ASN::Module $ASN) {
 sub EXPORT(*@params) {
     my $keys = @params.Map;
     my $ASN = parse-ASN slurp $keys<file>;
-    my $*PLUGIN = slurp($_) with $keys<plugin>;
+    my @*PLUGINS;
+    with $keys<plugin> -> $plugin-name {
+            require ::($plugin-name);
+            @*PLUGINS.push(::($plugin-name));
+    }
+
     my $*POOL = TypePool.new;
     compile-types($_) with $ASN;
     $*POOL.export.Map;
