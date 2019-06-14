@@ -139,7 +139,7 @@ multi sub compile-complex-builtin('SEQUENCE', $type, $name) {
         with $field.params<optional> {
             $attr does Optional;
         } orwith $field.params<default> {
-            my $default-value = $_ eq 'FALSE' ?? False !! $_;
+            my $default-value = $_;
             trait_mod:<is>($attr, :default($default-value));
             $attr does DefaultValue[:$default-value];
         }
