@@ -1,8 +1,8 @@
 use MONKEY-SEE-NO-EVAL;
-use nqp;
 use ASN::Types;
 use ASN::Grammar;
 use ASN::META::Types;
+use Type::EnumHOW;
 
 my $builtin-types = set
         'BOOLEAN', 'INTEGER',
@@ -72,30 +72,17 @@ my sub resolve-recursion(ASNType $type, Str $name) {
 }
 
 multi sub compile-complex-builtin('ENUMERATED', $type, $name) {
-    # FIXME This is kind of a cheating
-    # which uses imitation of what Rakudo does using nqp.
-    # Rewriting using real Perl 6 is very welcome.
-    sub create_enum_value($enum_type_obj, $key, $value) {
-        state $index = 0;
-        # Create directly.
-        my $val := nqp::rebless(nqp::clone($value), $enum_type_obj);
-        nqp::bindattr($val, $enum_type_obj, '$!key', $key);
-        nqp::bindattr($val, $enum_type_obj, '$!value', $value);
-        nqp::bindattr_i($val, $enum_type_obj, '$!index', $index++);
+    my Str @names = $type.params<defs>.keys;
+    my Int %symbols = $type.params<defs>.kv;
 
-        # Add to meta-object.
-        $enum_type_obj.^add_enum_value($val);
-
-        # Result is the value.
-        $key => $val
-    }
-
-    my $new-enum = Metamodel::EnumHOW.new_type(:$name, base_type => Int);
-    $new-enum.^compose_repr;
-    $new-enum = $new-enum but Enumeration;
-    my %enum-values = (create_enum_value($new-enum, .key, .value) for $type.params<defs><>);
+    my $new-enum = Type::EnumHOW.new_type(:$name, :base_type(Int));
+    $new-enum.^set_package: OUR;
+    $new-enum.^add_attribute_with_values('$!symbol', %symbols, :type(Int));
     $new-enum.^compose;
-    $*POOL.add(ASNType.new(name => .key, base-type => 'ENUM VALUE', type => .value)) for %enum-values;
+    $new-enum.^add_enum_values(%symbols.sort(*.value).map(*.key));
+    $new-enum.^compose_values;
+
+    $*POOL.add(ASNType.new(name => $_, base-type => 'ENUM VALUE', type => ::("OUR::$_"))) for @names;
     $*POOL.add(ASNType.new(:$name, base-type => 'ENUMERATED', type => $new-enum));
 }
 
