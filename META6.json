@@ -1,7 +1,7 @@
 {
   "name": "ASN::META",
   "description": "A MOP-based compile-time ASN.1 spec evaluator",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "perl": "6.c",
   "authors": [
     "Alexander Kiryuhin <alexander.kiryuhin@gmail.com>"
