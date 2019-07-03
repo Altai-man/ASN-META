@@ -23,7 +23,7 @@ my $builtin-types = set
 
 my $complex-types = set 'ENUMERATED', 'SEQUENCE', 'SEQUENCE OF', 'SET', 'SET OF', 'CHOICE';
 
-my %simple-builtin-types = 'OCTET STRING' => Str,
+my %simple-builtin-types = 'OCTET STRING' => Any,
         UTF8String => Str,
         BOOLEAN => Bool,
         INTEGER => Int,
@@ -117,22 +117,13 @@ multi sub compile-complex-builtin('SEQUENCE', $type, $name) {
         my $name = '$!' ~ S:g/(<[a..z]>)(<[A..Z]>)/$0-$1/.lc with $field-name;
         my $attr = Attribute.new(:$name, type => $attribute-type.type, package => $new-type, :has_accessor);
 
-        # Patch Str attribute with necessary roles
-        if $attribute-type.type === Positional[Str] {
-            $attr does ASN::Types::OctetString;
-        }
-
-        if $attribute-type.type ~~ Str {
-            given $attribute-type.base-type {
-                when 'OCTET STRING' {
-                    $attr does ASN::Types::OctetString;
-                }
-                when 'UTF8String' {
-                    $attr does ASN::Types::UTF8String;
-                }
-                default {
-                    die "Other type of String is encountered: $_";
-                }
+        # Patch Str-like attributes with necessary roles
+        given $attribute-type.base-type {
+            when 'OCTET STRING' {
+                $attr does ASN::Types::OctetString;
+            }
+            when 'UTF8String' {
+                $attr does ASN::Types::UTF8String;
             }
         }
         # Apply DEFAULT or OPTIONAL
@@ -169,9 +160,9 @@ multi sub compile-complex-builtin('SEQUENCE OF', $type, $name) {
             my $tag-value = .value;
             $new-type.^add_method('ASN-tag-value', method { $tag-value });
             if $of-type-ref.type (elem) $builtin-types {
-                $new-type.^add_role(Positional[%simple-builtin-types{$of-type-ref.type}]);
+                $new-type.^add_role(ASNSequenceOf[%simple-builtin-types{$of-type-ref.type}]);
             } else {
-                $new-type.^add_role(Positional[check-recursion($of-type-ref, $of-type-ref.type).type]);
+                $new-type.^add_role(ASNSequenceOf[check-recursion($of-type-ref, $of-type-ref.type).type]);
             }
             $new-type.^compose;
             return $*POOL.add(ASNType.new(:$name, base-type => 'SEQUENCE OF', type => $new-type));
@@ -190,7 +181,7 @@ multi sub compile-complex-builtin('SEQUENCE OF', $type, $name) {
     } else {
         $of-type = check-recursion($of-type-ref, $of-type-ref.type).type;
     }
-    $*POOL.add(ASNType.new(:$name, base-type => 'SEQUENCE OF', type => Positional[$of-type]));
+    $*POOL.add(ASNType.new(:$name, base-type => 'SEQUENCE OF', type => ASNSequenceOf[$of-type]));
 }
 
 multi sub compile-complex-builtin('SET OF', $type, $name) {
@@ -228,10 +219,8 @@ multi sub compile-complex-builtin('CHOICE', $type, $name) {
         if $compiled-option.type ~~ RecursionStub {
             @parent-list = $compiled-option.parent-list;
         };
-        if $compiled-option.type === Str {
-            if $compiled-option.base-type eq 'OCTET STRING' {
-                $compiled-option.type = ASN::Types::OctetString;
-            }
+        if $compiled-option.type === Any {
+            $compiled-option.type = Blob;
         }
         %choices{$key} = $tag.defined ?? ($tag => $compiled-option.type) !! $compiled-option.type;
     }
