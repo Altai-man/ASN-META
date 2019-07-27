@@ -116,6 +116,8 @@ multi sub compile-complex-builtin('SEQUENCE', $type, $name) {
         # Create attribute's name and use it with type to create the attribute itself
         my $name = '$!' ~ S:g/(<[a..z]>)(<[A..Z]>)/$0-$1/.lc with $field-name;
         my $attr = Attribute.new(:$name, type => $attribute-type.type, package => $new-type, :has_accessor);
+        # All fields are rw by default
+        trait_mod:<is>($attr, :rw);
 
         # Patch Str-like attributes with necessary roles
         given $attribute-type.base-type {
