@@ -34,7 +34,7 @@ my class RecursionStub {
 }
 
 my sub check-recursion(ASN::RawType $type, Str $name) {
-    with @*TYPE-STACK.grep(*.key eq $type.type).first {
+    with @*TYPE-STACK.first(*.key eq $type.type) {
         # We have started to recurse!
         # Let's replace the type with a stub
         # and get a parent we have to update later
@@ -44,7 +44,7 @@ my sub check-recursion(ASN::RawType $type, Str $name) {
     }
     else {
         unless $name (elem) $builtin-types {
-            with $*TYPES.grep({.name eq $name}).first {
+            with $*TYPES.first({.name eq $name}) {
                 @*TYPE-STACK.push: $name.tc => $_.type;
             } else {
                 @*TYPE-STACK.push: $name.tc => $type;
@@ -61,7 +61,7 @@ my sub check-recursion(ASN::RawType $type, Str $name) {
 my sub resolve-recursion(ASNType $type, Str $name) {
     # We need to re-do only recursive types
     if $type.is-recursive {
-        my $def = $*TYPES.grep(*.name eq $name).first;
+        my $def = $*TYPES.first(*.name eq $name);
         compile-complex-builtin('CHOICE', $def.type, $name).type.ASN-choice;
         for @($type.parent-list.reverse) -> $parent {
             with $*POOL.has($parent.key) {
@@ -311,7 +311,7 @@ sub compile-type($type, $asn-name) {
         return compile-builtin-type($type, $symbol-name);
     } else {
         # Check if custom is among types and reduce a link
-        with $*TYPES.grep($type.type eq *.name).first {
+        with $*TYPES.first($type.type eq *.name) {
             # Make a union of outer and inner type params
             my $params-union = (flat $type.params, .type.params).Hash;
             my $base-type = ASN::RawType.new(name => $asn-name, type => .type.type, params => $params-union);
