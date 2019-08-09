@@ -21,6 +21,8 @@ class TypePool {
     }
 
     method export {
-        %!types.map({ .key, .value.type }).flat.Map;
+        Map(
+            %!types.map: { .key => .value.type<> }
+        )
     }
 }
