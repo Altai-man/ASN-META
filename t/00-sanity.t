@@ -1,4 +1,4 @@
-use ASN::META <file t/test.asn>;
+use ASN::META BEGIN { 'file', slurp 't/test.asn' };
 use ASN::Types;
 use Test;
 

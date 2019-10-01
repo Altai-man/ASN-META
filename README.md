@@ -13,7 +13,7 @@ Experimental Perl 6 module that is able to compile [ASN.1](https://en.wikipedia.
 
 Main workflow is as follows:
 
-* A specification file's path is passed to ASN::META on module `use`
+* A specification is passed to ASN::META on module `use`
 * (internally, `ASN::Grammar` is used to parse the specification)
 * ASN::META uses parsed specification to generate appropriate types with [MOP](https://docs.perl6.org/language/mop)
 * Generated types for particular ASN.1 specification are precompiled and exported
@@ -45,7 +45,11 @@ Rocket ::= SEQUENCE
 END
 
 # In file `User.pm6`:
-use ASN::META <file schema.asn>;
+# Note usage of BEGIN block to gather file's content at compile time
+use ASN::META BEGIN [ 'file', slurp 'schema.asn' };
+# In case of re-compilation on dependency change, package User may be
+# re-built from the place where local paths are useless, in this case use %?RESOURCES:
+# `use ASN::META BEGIN { 'file', slurp %?RESOURCES<schema.asn> }`
 
 # `Rocket` type is exported by ASN::META
 my Rocket $rocket = Rocket.new(name => 'Rocker', :fuel(solid),

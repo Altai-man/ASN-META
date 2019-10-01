@@ -1,4 +1,4 @@
-use ASN::META <file t/test2.asn>;
+use ASN::META BEGIN { 'file', slurp 't/test2.asn' };
 use Test;
 
 ok Filter.new((not => Filter.new((number => 15)))).defined, "Recursive type is defined";

@@ -338,11 +338,11 @@ sub compile-types(ASN::Module $ASN) {
 
 sub EXPORT(*@params) {
     my $keys = @params.Map;
-    my $ASN = parse-ASN slurp $keys<file>;
+    my $ASN = parse-ASN $keys<file>;
     my @*PLUGINS;
     with $keys<plugin> -> $plugin-name {
-            require ::($plugin-name);
-            @*PLUGINS.push(::($plugin-name));
+        require ::($plugin-name);
+        @*PLUGINS.push(::($plugin-name));
     }
 
     my $*POOL = TypePool.new;
