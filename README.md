@@ -1,11 +1,11 @@
 ### ASN::META
 
-Experimental Perl 6 module that is able to compile [ASN.1](https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One) specification into set of Perl 6 types.
+Experimental Raku module that is able to compile [ASN.1](https://en.wikipedia.org/wiki/Abstract_Syntax_Notation_One) specification into set of Raku types.
 
 #### What ASN::META does not?
 
-* It does not generate Perl 6 code (at least, textual form).
-* The module knows nothing about ASN.1 encoding means, it purely generates Perl 6 types.
+* It does not generate Raku code (at least, textual form).
+* The module knows nothing about ASN.1 encoding means, it purely generates Raku types.
   For this purpose a separate module may be used. Currently, goal is to have full compatibility
   with [ASN::BER](https://github.com/Altai-man/ASN-BER) module.
 

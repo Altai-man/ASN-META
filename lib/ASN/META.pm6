@@ -238,7 +238,7 @@ sub compile-simple-builtin($type, $name) {
     my $value-to-bind;
     with $type.params<tag> {
         #| In this case, we should not "flat" this symbol
-        #| to built-in Perl 6 type, but rather create a wrapper
+        #| to built-in Raku type, but rather create a wrapper
         #| with ASN-tag-value method implemented
         if .class eq 'APPLICATION' {
             my $new-type = Metamodel::ClassHOW.new_type(:$name);
@@ -283,7 +283,7 @@ sub compile-type($type, $asn-name) {
     #| * Type has to be created and added to cache
 
     #| We always title-case names:
-    #| * Top-level names are being left as they are to be suitable for Perl 6 type
+    #| * Top-level names are being left as they are to be suitable for Raku type
     #| * Inner-declared names are based on a field name, so have to be title-case to match the style
     my $symbol-name = ($asn-name // '').tc;
 
